@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScrollGet</title>
+  <script src="../lib/umd/index.js"></script>
+  <style>
+    body {
+      padding: 1px;
+    }
+
+    .wrapper {
+      padding: 1px;
+      height: 100vh;
+      overflow: scroll;
+      background: #eee;
+    }
+
+    #module, #module1 {
+      height: 10px;
+      margin: 100vh 0 50vh;
+      background: #999;
+    }
+
+    #module1 {
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  a
+  <div id="module"></div>
+<!--  <div id="module1"></div>-->
+</div>
+
+<script>
+var module = document.getElementById('module')
+// do something ...
+function run() {
+  ScrollGet.scrollToElement(document.getElementById('module')).then(() => {
+    console.log(document.getElementById('module').parentElement.scrollTop, ScrollGet.getRect(document.getElementById('module')).top)
+  })
+}
+</script>
+</body>
+</html>
