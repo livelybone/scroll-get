@@ -1,5 +1,5 @@
-import fs from 'fs'
-import path from 'path'
+// import fs from 'fs'
+// import path from 'path'
 import dts from 'rollup-plugin-dts'
 import license from 'rollup-plugin-license'
 import { uglify } from 'rollup-plugin-uglify'
@@ -8,24 +8,24 @@ import baseConf from './rollup.config.base'
 
 const isWatch = process.env.BUILD_ENV === 'watch'
 const isDts = process.env.BUILD_ENV === 'dts'
-
-const formats = ['es', 'umd']
-
-function getEntries() {
-  const reg = /\.ts$/
-  return fs
-    .readdirSync(path.resolve(__dirname, './src'))
-    .filter(
-      filename =>
-        reg.test(filename) &&
-        !fs.statSync(path.resolve(__dirname, './src', filename)).isDirectory(),
-    )
-    .map(filename => ({
-      name: filename.replace(reg, ''),
-      filename: path.resolve(__dirname, './src', filename),
-      formats: formats.filter(f => f !== 'es'),
-    }))
-}
+//
+// const formats = ['es', 'umd']
+//
+// function getEntries() {
+//   const reg = /\.ts$/
+//   return fs
+//     .readdirSync(path.resolve(__dirname, './src'))
+//     .filter(
+//       filename =>
+//         reg.test(filename) &&
+//         !fs.statSync(path.resolve(__dirname, './src', filename)).isDirectory(),
+//     )
+//     .map(filename => ({
+//       name: filename.replace(reg, ''),
+//       filename: path.resolve(__dirname, './src', filename),
+//       formats: formats.filter(f => f !== 'es'),
+//     }))
+// }
 
 const conf = entry => ({
   input: entry.filename,
@@ -81,5 +81,5 @@ export default isWatch
         needUglify: true,
         external: false,
       },
-      ...getEntries(),
+      // ...getEntries(),
     ].map(conf)
