@@ -25,7 +25,7 @@ export function posRelativeToClient(el: Element) {
  * x: width of horizontal scrollbar
  * y: width of vertical scrollbar
  * */
-export function getNativeScrollbarWidth(el: Window | HTMLElement) {
+export function getNativeScrollbarWidth(el?: Window | HTMLElement) {
   const $el = el || window
   const isWindow = $el === window
   try {

@@ -22,7 +22,7 @@ declare function posRelativeToClient(
  * y: width of vertical scrollbar
  * */
 declare function getNativeScrollbarWidth(
-  el: Window | HTMLElement,
+  el?: Window | HTMLElement,
 ): {
   x: number
   y: number
