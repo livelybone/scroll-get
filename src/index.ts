@@ -272,13 +272,20 @@ export function getViewElementsWhenScroll(
       })
 
       // 通过比较各自当前的可见区域的大小获得当前的最近元素
-      const viewElements = rects
+      const lastRect = rects[rects.length - 1]
+      let viewElements = rects
         .sort((a, b) => {
           return b.rect.viewPercent - a.rect.viewPercent
         })
         .filter(el => {
           return el.rect.viewPercent > 0
         })
+
+      if (viewElements.length < 1) {
+        lastRect.rect.viewAreaHeight = lastRect.rect.areaHeight
+        lastRect.rect.viewPercent = 1
+        viewElements = [lastRect]
+      }
       if (
         viewElements.length !== oldEl.length ||
         viewElements.some((el, i) => el.element !== oldEl[i].element)
