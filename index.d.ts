@@ -57,6 +57,12 @@ declare function getScrollParent($el: HTMLElement): HTMLElement | undefined
 
 interface ScrollToElementOptions {
   /**
+   * Interval
+   *
+   * Default: 300
+   * */
+  time: number
+  /**
    * Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
    * */
   affectParent?: boolean
@@ -69,12 +75,10 @@ interface ScrollToElementOptions {
 
 /**
  * @param el                The target element you want scroll to
- * @param [time]            Interval
  * @param [options]         ScrollToElementOptions
  * */
 declare function scrollToElement(
   el: HTMLElement,
-  time?: number,
   options?: ScrollToElementOptions,
 ): Promise<void>
 

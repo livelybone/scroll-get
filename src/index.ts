@@ -143,6 +143,12 @@ export function getScrollParent($el: HTMLElement): HTMLElement | undefined {
 
 export interface ScrollToElementOptions {
   /**
+   * Interval
+   *
+   * Default: 300
+   * */
+  time: number
+  /**
    * Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
    * */
   affectParent?: boolean
@@ -155,18 +161,17 @@ export interface ScrollToElementOptions {
 
 /**
  * @param el                The target element you want scroll to
- * @param [time]            Interval
  * @param [options]         ScrollToElementOptions
  * */
 export function scrollToElement(
   el: HTMLElement,
-  time: number = 300,
   options?: ScrollToElementOptions,
 ): Promise<void> {
-  const { affectParent, rateFactor, offset = 0 } = options || {}
+  const { affectParent, rateFactor, offset = 0, time = 300 } = options || {}
   let scrollParent = getScrollParent(el)
   if (scrollParent) {
-    const parentScroll = () => scrollToElement(scrollParent!, time)
+    const parentScroll = () =>
+      scrollToElement(scrollParent!, { time, affectParent, rateFactor })
 
     let maxScrollTop: number
     let scrollTop: number
