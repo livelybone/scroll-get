@@ -26,23 +26,48 @@
     #module1 {
       background: #000;
     }
+    .content {
+      height: 30vh;
+    }
+
+    .a {
+      background: #c5d7ee;
+    }
+
+    #wrapper {
+      height: 70vh;
+      overflow: auto;
+      background: #eee;
+    }
   </style>
 </head>
 <body>
-<div class="wrapper">
-  a
-  <div id="module"></div>
-<!--  <div id="module1"></div>-->
+<!--<div class="wrapper">-->
+<!--  a-->
+<!--  <div id="module"></div>-->
+<!--&lt;!&ndash;  <div id="module1"></div>&ndash;&gt;-->
+<!--</div>-->
+<div id="wrapper">
+  <h1 class="a" id="a">a</h1>
+  <div class="content">content</div>
+  <h1 class="a" id="b">b</h1>
+  <div class="content">content</div>
+  <h1 class="a" id="c">c</h1>
+  <div class="content">content</div>
+  <h1 class="a" id="d">d</h1>
+  <div class="content">content</div>
 </div>
 
 <script>
-var module = document.getElementById('module')
-// do something ...
-function run() {
-  ScrollGet.scrollToElement(document.getElementById('module')).then(() => {
-    console.log(document.getElementById('module').parentElement.scrollTop, ScrollGet.getRect(document.getElementById('module')).top)
-  })
-}
+// var module = document.getElementById('module')
+// // do something ...
+// function run() {
+//   ScrollGet.scrollToElement(document.getElementById('module')).then(() => {
+//     console.log(document.getElementById('module').parentElement.scrollTop, ScrollGet.getRect(document.getElementById('module')).top)
+//   })
+// }
+
+ScrollGet.getViewElementsWhenScroll(document.getElementById('wrapper'), ['a', 'b', 'c', 'd'].map(id => document.getElementById(id)), console.log)
 </script>
 </body>
 </html>
