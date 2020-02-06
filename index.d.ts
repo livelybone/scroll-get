@@ -88,7 +88,7 @@ interface ElementInfo {
    * @prop areaHeight       元素对应区域的高度，这里认为一个元素对应的区域的高度等于该元素到它在页面上临近的下一个元素的距离加本身的高度
    * @prop viewAreaHeight   元素对应可视区域的高度，在页面上可以被看到的高度
    * @prop viewPercent      viewAreaHeight / areaHeight
-   *
+   *s
    * @prop areaHeight       The height of an element's area, which is considered to be equal to the distance from the element to its next adjacent element on the page plus the height of the element itself
    * @prop viewAreaHeight   The height of the visible area of the element on the page
    * @prop viewPercent      viewAreaHeight / areaHeight
