@@ -98,9 +98,53 @@ export function animation(
 }
 
 /**
+ * 获取元素的可能达到的最大的 scrollTop 值
+ *
+ * Gets the maximum possible scrollTop value for the element
+ * */
+export function getMaxScrollTop(el: HTMLElement) {
+  const lastChild = el.children[el.children.length - 1]
+  const getStyle = ($el?: Element | null): CSSStyleDeclaration | undefined => {
+    if ($el) {
+      // @ts-ignore
+      return getComputedStyle ? getComputedStyle($el) : $el.currentStyle
+    }
+    return undefined
+  }
+  const getMaxExceedMarginBottom = (
+    $el: Element | null | undefined,
+    lastMarginBottom = 0,
+  ): number => {
+    const style = getStyle($el)
+    if (style && style.display === 'block')
+      return getMaxExceedMarginBottom(
+        $el!.children[$el!.children.length - 1],
+        Math.max(lastMarginBottom, parseInt(style.marginBottom, 10)),
+      )
+    return lastMarginBottom
+  }
+  const marginBottom = getMaxExceedMarginBottom(lastChild)
+  return Math.max(0, el.scrollHeight - el.clientHeight - marginBottom)
+}
+
+/**
+ * 向上遍历元素的祖先，获取第一个滚动的祖先元素
+ *
+ * Traverse up the ancestor of the element to get the first scrolling ancestor element
+ * */
+export function getScrollParent($el: HTMLElement): HTMLElement | undefined {
+  if ($el.parentElement) {
+    const scrollParent = $el.parentElement as HTMLElement
+    if (getMaxScrollTop(scrollParent)) return scrollParent
+    return getScrollParent(scrollParent)
+  }
+  return undefined
+}
+
+/**
  * @param el                The target element you want scroll to
  * @param [time]            Interval
- * @param [affectParent]    Whether affect the parentElement, when it is true the parentElement will also scroll to the visible area
+ * @param [affectParent]    Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
  * @param [rateFactor]      RateFactor
  * */
 export function scrollToElement(
@@ -109,36 +153,33 @@ export function scrollToElement(
   affectParent?: boolean,
   rateFactor?: RateFactor,
 ): Promise<void> {
-  const getMaxScrollTop = ($el: HTMLElement) =>
-    $el.scrollHeight - $el.clientHeight
-  if (el.parentElement) {
-    let parentElement = el.parentElement as HTMLElement
-
-    const parentScroll = () => scrollToElement(parentElement, time)
+  let scrollParent = getScrollParent(el)
+  if (scrollParent) {
+    const parentScroll = () => scrollToElement(scrollParent!, time)
 
     let maxScrollTop: number
     let scrollTop: number
-    if (parentElement === document.body) {
+    if (scrollParent === document.body) {
       maxScrollTop = getMaxScrollTop(document.body)
       scrollTop = document.body.scrollTop
       if (!maxScrollTop) {
         maxScrollTop = getMaxScrollTop(document.documentElement)
-        parentElement = document.documentElement
+        scrollParent = document.documentElement
         scrollTop = document.documentElement.scrollTop
       }
     } else {
-      maxScrollTop = getMaxScrollTop(parentElement)
-      scrollTop = parentElement.scrollTop
+      maxScrollTop = getMaxScrollTop(scrollParent)
+      scrollTop = scrollParent.scrollTop
     }
 
-    const offsetTop = getRect(el).top - getRect(parentElement).top
+    const offsetTop = getRect(el).top - getRect(scrollParent).top
 
     const delta = Math.min(offsetTop, maxScrollTop)
     if (delta && offsetTop && maxScrollTop > 0) {
       return animation(
         time,
         rate => {
-          parentElement.scrollTop = scrollTop + delta * rate
+          scrollParent!.scrollTop = scrollTop + delta * rate
         },
         rateFactor,
       ).then(affectParent ? parentScroll : null)

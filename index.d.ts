@@ -42,9 +42,23 @@ declare function animation(
 ): Promise<unknown>
 
 /**
+ * 获取元素的可能达到的最大的 scrollTop 值
+ *
+ * Gets the maximum possible scrollTop value for the element
+ * */
+declare function getMaxScrollTop(el: HTMLElement): number
+
+/**
+ * 向上遍历元素的祖先，获取第一个滚动的祖先元素
+ *
+ * Traverse up the ancestor of the element to get the first scrolling ancestor element
+ * */
+declare function getScrollParent($el: HTMLElement): HTMLElement | undefined
+
+/**
  * @param el                The target element you want scroll to
  * @param [time]            Interval
- * @param [affectParent]    Whether affect the parentElement, when it is true the parentElement will also scroll to the visible area
+ * @param [affectParent]    Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
  * @param [rateFactor]      RateFactor
  * */
 declare function scrollToElement(
@@ -57,8 +71,10 @@ declare function scrollToElement(
 export {
   RateFactor,
   animation,
+  getMaxScrollTop,
   getNativeScrollbarWidth,
   getRect,
+  getScrollParent,
   posRelativeToClient,
   posRelativeToPage,
   scrollToElement,
