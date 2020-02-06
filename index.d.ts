@@ -55,21 +55,32 @@ declare function getMaxScrollTop(el: HTMLElement): number
  * */
 declare function getScrollParent($el: HTMLElement): HTMLElement | undefined
 
+interface ScrollToElementOptions {
+  /**
+   * Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
+   * */
+  affectParent?: boolean
+  /**
+   * RateFactor
+   * */
+  rateFactor?: RateFactor
+  offset?: number
+}
+
 /**
  * @param el                The target element you want scroll to
  * @param [time]            Interval
- * @param [affectParent]    Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
- * @param [rateFactor]      RateFactor
+ * @param [options]         ScrollToElementOptions
  * */
 declare function scrollToElement(
   el: HTMLElement,
   time?: number,
-  affectParent?: boolean,
-  rateFactor?: RateFactor,
+  options?: ScrollToElementOptions,
 ): Promise<void>
 
 export {
   RateFactor,
+  ScrollToElementOptions,
   animation,
   getMaxScrollTop,
   getNativeScrollbarWidth,

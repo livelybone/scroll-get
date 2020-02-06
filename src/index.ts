@@ -141,18 +141,29 @@ export function getScrollParent($el: HTMLElement): HTMLElement | undefined {
   return undefined
 }
 
+export interface ScrollToElementOptions {
+  /**
+   * Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
+   * */
+  affectParent?: boolean
+  /**
+   * RateFactor
+   * */
+  rateFactor?: RateFactor
+  offset?: number
+}
+
 /**
  * @param el                The target element you want scroll to
  * @param [time]            Interval
- * @param [affectParent]    Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
- * @param [rateFactor]      RateFactor
+ * @param [options]         ScrollToElementOptions
  * */
 export function scrollToElement(
   el: HTMLElement,
   time: number = 300,
-  affectParent?: boolean,
-  rateFactor?: RateFactor,
+  options?: ScrollToElementOptions,
 ): Promise<void> {
+  const { affectParent, rateFactor, offset = 0 } = options || {}
   let scrollParent = getScrollParent(el)
   if (scrollParent) {
     const parentScroll = () => scrollToElement(scrollParent!, time)
@@ -174,7 +185,7 @@ export function scrollToElement(
 
     const offsetTop = getRect(el).top - getRect(scrollParent).top
 
-    const delta = Math.min(offsetTop, maxScrollTop)
+    const delta = Math.min(offsetTop + offset, maxScrollTop)
     if (delta && offsetTop && maxScrollTop > 0) {
       return animation(
         time,
