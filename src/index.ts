@@ -147,7 +147,7 @@ export interface ScrollToElementOptions {
    *
    * Default: 300
    * */
-  time: number
+  time?: number
   /**
    * Whether affect the scrollParent, when it is true the scrollParent will also scroll to the visible area
    * */
