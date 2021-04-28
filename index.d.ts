@@ -1,19 +1,16 @@
 declare function getRect(el: Element): DOMRect
-
 declare function posRelativeToPage(
   el: HTMLElement,
 ): {
   pageLeft: number
   pageTop: number
 }
-
 declare function posRelativeToClient(
   el: Element,
 ): {
   clientLeft: number
   clientTop: number
 }
-
 /**
  * @desc if el === window || el === undefined, return the global scrollbar width info
  *       if el is an Element, return the scrollbar width info of the Element
@@ -27,34 +24,36 @@ declare function getNativeScrollbarWidth(
   x: number
   y: number
 }
-
 /**
  * This affects the performance of the animation by modifying the rate
  *
  * rate >= 0 && rate <= 1
  * */
 declare type RateFactor = (rate: number) => number
-
 declare function animation(
   time: number,
   cb: (rate: number) => void,
   rateFactor?: RateFactor,
 ): Promise<unknown>
-
 /**
- * 获取元素的可能达到的最大的 scrollTop 值
+ * 获取元素的可能达到的最大的 scrollTop 和 scrollLeft 值
  *
- * Gets the maximum possible scrollTop value for the element
+ * Gets the maximum possible scrollTop ans scrollLeft value for the element
  * */
-declare function getMaxScrollTop(el: HTMLElement): number
-
+declare function getMaxScrollOffset(
+  el: HTMLElement,
+): {
+  top: number
+  left: number
+}
 /**
- * 向上遍历元素的祖先，获取第一个滚动的祖先元素
+ * 向上遍历元素的祖先，获取第一个能滚动的祖先元素
  *
- * Traverse up the ancestor of the element to get the first scrolling ancestor element
+ * Traverse up the ancestor of the element to get the first scrollable ancestor element
  * */
-declare function getScrollParent($el: HTMLElement): HTMLElement | undefined
-
+declare function getScrollParent(
+  $el?: HTMLElement | null,
+): HTMLElement | undefined
 interface ScrollToElementOptions {
   /**
    * Interval
@@ -70,9 +69,15 @@ interface ScrollToElementOptions {
    * RateFactor
    * */
   rateFactor?: RateFactor
-  offset?: number
+  offset?:
+    | number
+    | {
+        left?: number
+        top?: number
+      }
+  leftDisabled?: boolean
+  topDisabled?: boolean
 }
-
 /**
  * @param el                The target element you want scroll to
  * @param [options]         ScrollToElementOptions
@@ -81,25 +86,27 @@ declare function scrollToElement(
   el: HTMLElement,
   options?: ScrollToElementOptions,
 ): Promise<void>
-
 interface ElementInfo {
   element: HTMLElement
   /**
-   * @prop areaHeight       元素对应区域的高度，这里认为一个元素对应的区域的高度等于该元素到它在页面上临近的下一个元素的距离加本身的高度
-   * @prop viewAreaHeight   元素对应可视区域的高度，在页面上可以被看到的高度
-   * @prop viewPercent      viewAreaHeight / areaHeight
-   *s
-   * @prop areaHeight       The height of an element's area, which is considered to be equal to the distance from the element to its next adjacent element on the page plus the height of the element itself
-   * @prop viewAreaHeight   The height of the visible area of the element on the page
-   * @prop viewPercent      viewAreaHeight / areaHeight
+   * @prop height           元素对应区域的高度
+   * @prop viewHeight       元素对应可视区域的高度，在页面上可以被看到的高度
+   * @prop width            元素对应区域的宽度
+   * @prop viewWidth        元素对应可视区域的宽度，在页面上可以被看到的宽度
+   * @prop viewPercent      viewHeight * viewWidth / height * width
+   *
+   * @prop height           The height of an element's area
+   * @prop viewHeight       The height of the visible area of the element on the page
+   * @prop width            The width of an element's area
+   * @prop viewWidth        The width of the visible area of the element on the page
+   * @prop viewPercent      viewHeight * viewWidth / height * width
    * */
   rect: DOMRect & {
-    areaHeight: number
-    viewAreaHeight: number
+    viewHeight: number
+    viewWidth: number
     viewPercent: number
   }
 }
-
 /**
  * @param viewElements   当前可见区域代表的元素，通过对比各自排序
  * */
@@ -108,7 +115,6 @@ declare type GetViewElementsWhenScrollCb = (
   scrollParentRect: DOMRect,
   ev?: Event,
 ) => any
-
 declare function getViewElementsWhenScroll(
   scrollElement: HTMLElement,
   targetElements: HTMLElement[],
@@ -121,7 +127,7 @@ export {
   RateFactor,
   ScrollToElementOptions,
   animation,
-  getMaxScrollTop,
+  getMaxScrollOffset,
   getNativeScrollbarWidth,
   getRect,
   getScrollParent,

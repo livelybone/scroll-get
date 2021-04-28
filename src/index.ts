@@ -98,45 +98,53 @@ export function animation(
 }
 
 /**
- * 获取元素的可能达到的最大的 scrollTop 值
+ * 获取元素的可能达到的最大的 scrollTop 和 scrollLeft 值
  *
- * Gets the maximum possible scrollTop value for the element
+ * Gets the maximum possible scrollTop ans scrollLeft value for the element
  * */
-export function getMaxScrollTop(el: HTMLElement) {
-  const lastChild = el.children[el.children.length - 1]
-  const getStyle = ($el?: Element | null): CSSStyleDeclaration | undefined => {
-    if ($el) {
-      // @ts-ignore
-      return getComputedStyle ? getComputedStyle($el) : $el.currentStyle
-    }
-    return undefined
+export function getMaxScrollOffset(el: HTMLElement) {
+  const style = window.getComputedStyle(el)
+  const offset = { top: 0, left: 0 }
+  if (['scroll', 'auto', 'overlay'].includes(style.overflowX)) {
+    offset.left = Math.max(0, el.scrollWidth - el.clientWidth)
   }
-  const getMaxExceedMarginBottom = (
-    $el: Element | null | undefined,
-    lastMarginBottom = 0,
-  ): number => {
-    const style = getStyle($el)
-    if (style && style.display === 'block')
-      return getMaxExceedMarginBottom(
-        $el!.children[$el!.children.length - 1],
-        Math.max(lastMarginBottom, parseInt(style.marginBottom, 10)),
-      )
-    return lastMarginBottom
+  if (['scroll', 'auto', 'overlay'].includes(style.overflowY)) {
+    offset.top = Math.max(0, el.scrollHeight - el.clientHeight)
   }
-  const marginBottom = getMaxExceedMarginBottom(lastChild)
-  return Math.max(0, el.scrollHeight - el.clientHeight - marginBottom)
+  return offset
+}
+
+function nonScrollOffset(offset: { top: number; left: number }) {
+  return !offset.top && !offset.left
 }
 
 /**
- * 向上遍历元素的祖先，获取第一个滚动的祖先元素
+ * 向上遍历元素的祖先，获取第一个能滚动的祖先元素
  *
- * Traverse up the ancestor of the element to get the first scrolling ancestor element
+ * Traverse up the ancestor of the element to get the first scrollable ancestor element
  * */
-export function getScrollParent($el: HTMLElement): HTMLElement | undefined {
-  if ($el.parentElement) {
-    const scrollParent = $el.parentElement as HTMLElement
-    if (getMaxScrollTop(scrollParent)) return scrollParent
-    return getScrollParent(scrollParent)
+export function getScrollParent(
+  $el?: HTMLElement | null,
+): HTMLElement | undefined {
+  if (!$el?.style) return undefined
+  const style = window.getComputedStyle($el)
+
+  if (style.position === 'fixed') return undefined
+
+  if (style.position === 'absolute') {
+    if ($el.offsetParent) {
+      return getScrollParent($el.offsetParent as HTMLElement)
+    }
+    return !nonScrollOffset(getMaxScrollOffset(document.body))
+      ? document.body
+      : getScrollParent(document.body)
+  }
+
+  const scrollParent = $el.parentElement as HTMLElement
+  if (scrollParent) {
+    return !nonScrollOffset(getMaxScrollOffset(scrollParent))
+      ? scrollParent
+      : getScrollParent(scrollParent)
   }
   return undefined
 }
@@ -156,7 +164,9 @@ export interface ScrollToElementOptions {
    * RateFactor
    * */
   rateFactor?: RateFactor
-  offset?: number
+  offset?: number | { left?: number; top?: number }
+  leftDisabled?: boolean
+  topDisabled?: boolean
 }
 
 /**
@@ -167,35 +177,46 @@ export function scrollToElement(
   el: HTMLElement,
   options?: ScrollToElementOptions,
 ): Promise<void> {
-  const { affectParent, rateFactor, offset = 0, time = 300 } = options || {}
-  let scrollParent = getScrollParent(el)
+  const { affectParent, rateFactor, offset: $offset = 0, time = 300 } =
+    options || {}
+  const offset =
+    typeof $offset === 'number'
+      ? { left: $offset, top: $offset }
+      : {
+          left: $offset.left || 0,
+          top: $offset.top || 0,
+        }
+  const scrollParent = getScrollParent(el)
   if (scrollParent) {
     const parentScroll = () =>
       scrollToElement(scrollParent!, { time, affectParent, rateFactor })
 
-    let maxScrollTop: number
-    let scrollTop: number
-    if (scrollParent === document.body) {
-      maxScrollTop = getMaxScrollTop(document.body)
-      scrollTop = document.body.scrollTop
-      if (!maxScrollTop) {
-        maxScrollTop = getMaxScrollTop(document.documentElement)
-        scrollParent = document.documentElement
-        scrollTop = document.documentElement.scrollTop
-      }
-    } else {
-      maxScrollTop = getMaxScrollTop(scrollParent)
-      scrollTop = scrollParent.scrollTop
+    const maxScrollOffset = getMaxScrollOffset(scrollParent)
+    const originScrollOffset = {
+      scrollLeft: scrollParent.scrollLeft,
+      scrollTop: scrollParent.scrollTop,
     }
 
-    const offsetTop = getRect(el).top - getRect(scrollParent).top
-
-    const delta = Math.min(offsetTop + offset, maxScrollTop)
-    if (delta && offsetTop && maxScrollTop > 0) {
+    const rect = getRect(el)
+    const scrollParentRect = getRect(scrollParent)
+    const delta = {
+      left: Math.min(
+        rect.left - scrollParentRect.left + offset.left,
+        maxScrollOffset.left,
+      ),
+      top: Math.min(
+        rect.top - scrollParentRect.top + offset.top,
+        maxScrollOffset.top,
+      ),
+    }
+    if (delta.left || delta.top) {
       return animation(
         time,
         rate => {
-          scrollParent!.scrollTop = scrollTop + delta * rate
+          scrollParent!.scrollTop =
+            originScrollOffset.scrollTop + delta.top * rate
+          scrollParent!.scrollLeft =
+            originScrollOffset.scrollLeft + delta.left * rate
         },
         rateFactor,
       ).then(affectParent ? parentScroll : null)
@@ -211,17 +232,21 @@ export function scrollToElement(
 export interface ElementInfo {
   element: HTMLElement
   /**
-   * @prop areaHeight       元素对应区域的高度，这里认为一个元素对应的区域的高度等于该元素到它在页面上临近的下一个元素的距离加本身的高度
-   * @prop viewAreaHeight   元素对应可视区域的高度，在页面上可以被看到的高度
-   * @prop viewPercent      viewAreaHeight / areaHeight
+   * @prop height           元素对应区域的高度
+   * @prop viewHeight       元素对应可视区域的高度，在页面上可以被看到的高度
+   * @prop width            元素对应区域的宽度
+   * @prop viewWidth        元素对应可视区域的宽度，在页面上可以被看到的宽度
+   * @prop viewPercent      viewHeight * viewWidth / height * width
    *
-   * @prop areaHeight       The height of an element's area, which is considered to be equal to the distance from the element to its next adjacent element on the page plus the height of the element itself
-   * @prop viewAreaHeight   The height of the visible area of the element on the page
-   * @prop viewPercent      viewAreaHeight / areaHeight
+   * @prop height           The height of an element's area
+   * @prop viewHeight       The height of the visible area of the element on the page
+   * @prop width            The width of an element's area
+   * @prop viewWidth        The width of the visible area of the element on the page
+   * @prop viewPercent      viewHeight * viewWidth / height * width
    * */
   rect: DOMRect & {
-    areaHeight: number
-    viewAreaHeight: number
+    viewHeight: number
+    viewWidth: number
     viewPercent: number
   }
 }
@@ -243,9 +268,6 @@ export function getViewElementsWhenScroll(
   if (targetElements.length > 0) {
     let oldEl: ElementInfo[] = []
 
-    // 排序：比较元素位置
-    targetElements.sort((a, b) => getRect(a).top - getRect(b).top)
-
     const scroll = (ev?: Event) => {
       const scrollRect = getRect(scrollElement)
       const elementsRect = targetElements.map(getRect)
@@ -253,39 +275,47 @@ export function getViewElementsWhenScroll(
       // 重新计算元素当前的区域高度及可见区域高度
       const rects = elementsRect.map((rect, i) => {
         const $rect = rect as ElementInfo['rect']
-        $rect.areaHeight =
-          i !== elementsRect.length - 1
-            ? elementsRect[i + 1].top - $rect.top
-            : $rect.height
-        $rect.viewAreaHeight = Math.max(
+        $rect.viewHeight = Math.max(
           0,
-          scrollRect.height +
-            $rect.areaHeight -
-            (Math.max(
-              $rect.top + $rect.areaHeight,
-              scrollRect.top + scrollRect.height,
-            ) -
-              Math.min(scrollRect.top, $rect.top)),
+          Math.min(
+            $rect.top + $rect.height,
+            scrollRect.top + scrollRect.height,
+          ) - Math.max(scrollRect.top, $rect.top),
         )
-        $rect.viewPercent = $rect.viewAreaHeight / $rect.areaHeight
+        $rect.viewWidth = Math.max(
+          0,
+          Math.min(
+            $rect.left + $rect.width,
+            scrollRect.left + scrollRect.width,
+          ) - Math.max(scrollRect.left, $rect.left),
+        )
+        if ($rect.height && $rect.width) {
+          $rect.viewPercent =
+            (($rect.viewHeight * $rect.viewWidth) / $rect.height) * $rect.width
+        } else if (!$rect.height && !$rect.width) {
+          $rect.viewPercent = 0
+        } else if (!$rect.height) {
+          $rect.viewPercent = $rect.viewWidth / $rect.width
+        } else {
+          $rect.viewPercent = $rect.viewHeight / $rect.height
+        }
         return { rect: $rect, element: targetElements[i] }
       })
 
       // 通过比较各自当前的可见区域的大小获得当前的最近元素
-      const lastRect = rects[rects.length - 1]
-      let viewElements = rects
-        .sort((a, b) => {
-          return b.rect.viewPercent - a.rect.viewPercent
-        })
+      const viewElements = rects
         .filter(el => {
           return el.rect.viewPercent > 0
         })
+        .sort((a, b) => {
+          const l1 = b.rect.viewPercent - a.rect.viewPercent
+          if (l1) return l1
+          return (
+            b.rect.viewHeight * b.rect.viewWidth -
+            a.rect.viewHeight * a.rect.viewWidth
+          )
+        })
 
-      if (viewElements.length < 1) {
-        lastRect.rect.viewAreaHeight = lastRect.rect.areaHeight
-        lastRect.rect.viewPercent = 1
-        viewElements = [lastRect]
-      }
       if (
         viewElements.length !== oldEl.length ||
         viewElements.some((el, i) => el.element !== oldEl[i].element)
