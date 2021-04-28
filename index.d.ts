@@ -75,7 +75,13 @@ interface ScrollToElementOptions {
         left?: number
         top?: number
       }
+  /**
+   * forbidden x scroll
+   * */
   leftDisabled?: boolean
+  /**
+   * forbidden y scroll
+   * */
   topDisabled?: boolean
 }
 /**

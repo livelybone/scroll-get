@@ -165,7 +165,13 @@ export interface ScrollToElementOptions {
    * */
   rateFactor?: RateFactor
   offset?: number | { left?: number; top?: number }
+  /**
+   * forbidden x scroll
+   * */
   leftDisabled?: boolean
+  /**
+   * forbidden y scroll
+   * */
   topDisabled?: boolean
 }
 
@@ -177,8 +183,7 @@ export function scrollToElement(
   el: HTMLElement,
   options?: ScrollToElementOptions,
 ): Promise<void> {
-  const { affectParent, rateFactor, offset: $offset = 0, time = 300 } =
-    options || {}
+  const { offset: $offset = 0, time = 300, ...resOptions } = options || {}
   const offset =
     typeof $offset === 'number'
       ? { left: $offset, top: $offset }
@@ -187,9 +192,9 @@ export function scrollToElement(
           top: $offset.top || 0,
         }
   const scrollParent = getScrollParent(el)
-  if (scrollParent) {
+  if (scrollParent && (!resOptions.topDisabled || !resOptions.leftDisabled)) {
     const parentScroll = () =>
-      scrollToElement(scrollParent!, { time, affectParent, rateFactor })
+      scrollToElement(scrollParent!, { time, ...resOptions })
 
     const maxScrollOffset = getMaxScrollOffset(scrollParent)
     const originScrollOffset = {
@@ -202,27 +207,34 @@ export function scrollToElement(
     const delta = {
       left: Math.min(
         rect.left - scrollParentRect.left + offset.left,
-        maxScrollOffset.left,
+        maxScrollOffset.left - scrollParent.scrollLeft,
       ),
       top: Math.min(
         rect.top - scrollParentRect.top + offset.top,
-        maxScrollOffset.top,
+        maxScrollOffset.top - scrollParent.scrollTop,
       ),
     }
-    if (delta.left || delta.top) {
+    if (
+      (delta.left && !resOptions.leftDisabled) ||
+      (delta.top && !resOptions.topDisabled)
+    ) {
       return animation(
         time,
         rate => {
-          scrollParent!.scrollTop =
-            originScrollOffset.scrollTop + delta.top * rate
-          scrollParent!.scrollLeft =
-            originScrollOffset.scrollLeft + delta.left * rate
+          if (!resOptions.topDisabled) {
+            scrollParent!.scrollTop =
+              originScrollOffset.scrollTop + delta.top * rate
+          }
+          if (!resOptions.leftDisabled) {
+            scrollParent!.scrollLeft =
+              originScrollOffset.scrollLeft + delta.left * rate
+          }
         },
-        rateFactor,
-      ).then(affectParent ? parentScroll : null)
+        resOptions.rateFactor,
+      ).then(resOptions.affectParent ? parentScroll : null)
     }
 
-    if (affectParent) {
+    if (resOptions.affectParent) {
       return parentScroll()
     }
   }
