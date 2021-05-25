@@ -34,15 +34,14 @@ export function getNativeScrollbarWidth(el?: Window | HTMLElement) {
       : null
     if (!(info && typeof info.y === 'number' && typeof info.x === 'number')) {
       // If nativeScrollbarWidth is illegal, reset it
-      const wrapper = isWindow
-        ? document.createElement('div')
-        : ($el as HTMLElement)
+      const doc = el && 'ownerDocument' in el ? el.ownerDocument : document
+      const wrapper = isWindow ? doc.createElement('div') : ($el as HTMLElement)
       if (isWindow) {
         wrapper.setAttribute(
           'style',
           'position:fixed;top:0;left:0;opacity:0;pointer-events:none;width:200px;height:200px;overflow:scroll',
         )
-        document.body.appendChild(wrapper)
+        doc.body.appendChild(wrapper)
       }
       info = {
         y: wrapper.offsetWidth - wrapper.clientWidth,
@@ -50,7 +49,7 @@ export function getNativeScrollbarWidth(el?: Window | HTMLElement) {
       }
       if (isWindow) {
         ;(window as any).nativeScrollbarWidth = info
-        document.body.removeChild(wrapper)
+        doc.body.removeChild(wrapper)
       }
     }
     return info
@@ -131,18 +130,20 @@ export function getScrollParent(
 
   if (style.position === 'fixed') return undefined
 
+  const doc = $el.ownerDocument
   if (style.position === 'absolute') {
     if ($el.offsetParent) {
       return getScrollParent($el.offsetParent as HTMLElement)
     }
-    return !nonScrollOffset(getMaxScrollOffset(document.body))
-      ? document.body
-      : getScrollParent(document.body)
+    return !nonScrollOffset(getMaxScrollOffset(doc.body))
+      ? doc.body
+      : getScrollParent(doc.body)
   }
 
   const scrollParent = $el.parentElement as HTMLElement
   if (scrollParent) {
-    return !nonScrollOffset(getMaxScrollOffset(scrollParent))
+    return !nonScrollOffset(getMaxScrollOffset(scrollParent)) ||
+      scrollParent === doc.documentElement
       ? scrollParent
       : getScrollParent(scrollParent)
   }

@@ -68,6 +68,7 @@
   </div>
 
   <div id="block" style="position: fixed; left: 0; top: 0">sdfsdf</div>
+  <a id="link" href="https://baidu.com" target="__blank" download="">link</a>
 </div>
 
 <script>
@@ -82,6 +83,19 @@
   ScrollGet.getViewElementsWhenScroll(document.getElementById('wrapper'), ['a', 'b', 'c', 'd'].map(id => document.getElementById(id)), console.log);
 
   const block = document.querySelector('#block');
+  const link = document.querySelector('#link');
+
+  function click(el) {
+    return new Promise(resolve => {
+      const cb = ev => {
+        resolve()
+        console.log(1111, ev);
+      }
+      el.addEventListener('click', cb)
+      el.click()
+      setTimeout(() => el?.removeEventListener('click', cb), 1000)
+    })
+  }
 </script>
 </body>
 </html>
