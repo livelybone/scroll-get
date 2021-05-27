@@ -131,7 +131,7 @@ declare function getViewElementsWhenScroll(
  * */
 declare function isElementInView(
   el?: HTMLElement | null,
-  scroller?: HTMLElement | null,
+  scroller?: DOMRect | HTMLElement | null,
 ): boolean
 
 export {
