@@ -357,11 +357,12 @@ export function getViewElementsWhenScroll(
  * */
 export function isElementInView(
   el?: HTMLElement | null,
-  scroller?: HTMLElement | null,
+  scroller?: DOMRect | HTMLElement | null,
 ) {
   if (!el || !scroller) return false
   const rect = el.getBoundingClientRect()
-  const scrollerRect = scroller.getBoundingClientRect()
+  const scrollerRect =
+    'nodeType' in scroller ? scroller.getBoundingClientRect() : scroller
   const windowRect = {
     x: 0,
     y: 0,
