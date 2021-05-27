@@ -129,10 +129,7 @@ declare function getViewElementsWhenScroll(
 /**
  * Judge whether the element is in current page view
  * */
-declare function isElementInView(
-  el?: HTMLElement | null,
-  scroller?: DOMRect | HTMLElement | null,
-): boolean
+declare function isElementInView(el?: HTMLElement | null): boolean
 
 export {
   ElementInfo,

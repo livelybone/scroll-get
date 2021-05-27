@@ -355,27 +355,19 @@ export function getViewElementsWhenScroll(
 /**
  * Judge whether the element is in current page view
  * */
-export function isElementInView(
-  el?: HTMLElement | null,
-  scroller?: DOMRect | HTMLElement | null,
-) {
-  if (!el || !scroller) return false
+export function isElementInView(el?: HTMLElement | null) {
+  if (!el) return false
   const rect = el.getBoundingClientRect()
-  const scrollerRect =
-    'nodeType' in scroller ? scroller.getBoundingClientRect() : scroller
-  const windowRect = {
-    x: 0,
-    y: 0,
-    width: window.innerWidth,
-    height: window.innerHeight,
-  }
-  scrollerRect.x = Math.max(scrollerRect.x, windowRect.x)
-  scrollerRect.y = Math.max(scrollerRect.y, windowRect.y)
-  scrollerRect.width = Math.min(scrollerRect.width, windowRect.width)
-  scrollerRect.height = Math.min(scrollerRect.height, windowRect.height)
-
-  if (rect.x + rect.width <= scrollerRect.x) return false
-  if (rect.x >= scrollerRect.x + scrollerRect.width) return false
-  if (rect.y + rect.height < scrollerRect.y) return false
-  return rect.y < scrollerRect.y + scrollerRect.height
+  const x = rect.x + rect.width / 2
+  const y = rect.y + rect.height / 2
+  const points: [number, number][] = [
+    [x, rect.y],
+    [x, rect.y + rect.height - 1],
+    [rect.x, y],
+    [rect.x + rect.width - 1, y],
+    [x, y],
+  ]
+  return points.some(point =>
+    el.contains(el.ownerDocument.elementFromPoint(...point)),
+  )
 }
