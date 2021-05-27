@@ -126,6 +126,13 @@ declare function getViewElementsWhenScroll(
   targetElements: HTMLElement[],
   cb: GetViewElementsWhenScrollCb,
 ): () => void
+/**
+ * Judge whether the element is in current page view
+ * */
+declare function isElementInView(
+  el?: HTMLElement | null,
+  scroller?: HTMLElement | null,
+): boolean
 
 export {
   ElementInfo,
@@ -138,6 +145,7 @@ export {
   getRect,
   getScrollParent,
   getViewElementsWhenScroll,
+  isElementInView,
   posRelativeToClient,
   posRelativeToPage,
   scrollToElement,

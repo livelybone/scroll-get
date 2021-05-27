@@ -1,6 +1,6 @@
 {
   "name": "@livelybone/scroll-get",
-  "version": "6.0.2",
+  "version": "6.1.0",
   "description": "Some useful tool of browser scroll, such as tool for calculating position relative to page/client, tool for getting the native scrollbar width...",
   "main": "./lib/umd/index.js",
   "module": "./lib/es/index.js",

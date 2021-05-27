@@ -104,10 +104,16 @@ export function animation(
 export function getMaxScrollOffset(el: HTMLElement) {
   const style = window.getComputedStyle(el)
   const offset = { top: 0, left: 0 }
-  if (['scroll', 'auto', 'overlay'].includes(style.overflowX)) {
+  if (
+    el.nodeName === 'HTML' ||
+    ['scroll', 'auto', 'overlay'].includes(style.overflowX)
+  ) {
     offset.left = Math.max(0, el.scrollWidth - el.clientWidth)
   }
-  if (['scroll', 'auto', 'overlay'].includes(style.overflowY)) {
+  if (
+    el.nodeName === 'HTML' ||
+    ['scroll', 'auto', 'overlay'].includes(style.overflowY)
+  ) {
     offset.top = Math.max(0, el.scrollHeight - el.clientHeight)
   }
   return offset
@@ -205,6 +211,9 @@ export function scrollToElement(
 
     const rect = getRect(el)
     const scrollParentRect = getRect(scrollParent)
+    if (scrollParent.nodeName === 'HTML') {
+      scrollParentRect.y = 0
+    }
     const delta = {
       left: Math.min(
         rect.left - scrollParentRect.left + offset.left,
@@ -341,4 +350,31 @@ export function getViewElementsWhenScroll(
     return () => scrollElement.removeEventListener('scroll', scroll)
   }
   return () => {}
+}
+
+/**
+ * Judge whether the element is in current page view
+ * */
+export function isElementInView(
+  el?: HTMLElement | null,
+  scroller?: HTMLElement | null,
+) {
+  if (!el || !scroller) return false
+  const rect = el.getBoundingClientRect()
+  const scrollerRect = scroller.getBoundingClientRect()
+  const windowRect = {
+    x: 0,
+    y: 0,
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
+  scrollerRect.x = Math.max(scrollerRect.x, windowRect.x)
+  scrollerRect.y = Math.max(scrollerRect.y, windowRect.y)
+  scrollerRect.width = Math.min(scrollerRect.width, windowRect.width)
+  scrollerRect.height = Math.min(scrollerRect.height, windowRect.height)
+
+  if (rect.x + rect.width <= scrollerRect.x) return false
+  if (rect.x >= scrollerRect.x + scrollerRect.width) return false
+  if (rect.y + rect.height < scrollerRect.y) return false
+  return rect.y < scrollerRect.y + scrollerRect.height
 }
