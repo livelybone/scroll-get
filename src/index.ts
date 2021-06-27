@@ -77,13 +77,9 @@ export function animation(
 ) {
   const $rateFactor = rateFactor || defaultRateFactor
   const run = ($cb: () => boolean) => {
-    /**
-     * When page run in background, requestAnimationFrame callback seem to be blocked
-     * So use setTimeout instead of requestAnimationFrame
-     * */
-    setTimeout(() => {
+    window.requestAnimationFrame(() => {
       if ($cb()) run($cb)
-    }, 16)
+    })
   }
 
   return new Promise(res => {
